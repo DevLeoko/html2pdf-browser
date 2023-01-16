@@ -1,4 +1,4 @@
-import { jsPDF, type jsPDFOptions } from 'jspdf'
+import { jsPDF, jsPDFOptions } from 'jspdf'
 import 'svg2pdf.js'
 import type { Document, RectOptions, TextOptions } from './Document'
 import { addAllAvailabelFontsToPdf, getSafeFontWeight } from './font-utils'
