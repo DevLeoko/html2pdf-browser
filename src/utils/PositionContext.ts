@@ -1,43 +1,23 @@
 import { pxToMm } from './conversion-utils'
 
 export class PositionContext {
-	private offsetParentX: number
-	private offsetParentY: number
-	private offsetParent: HTMLElement
-	private myX: number
-	private myY: number
+	private element: HTMLElement
 
 	constructor(
-		wrapper: HTMLElement,
-		offsetParentX?: number,
-		offsetParentY?: number,
-		myX?: number,
-		myY?: number
+		private wrapper: HTMLElement,
+		element?: HTMLElement,
 	) {
-		this.offsetParentX = offsetParentX ?? 0
-		this.offsetParentY = offsetParentY ?? 0
-		this.myX = myX ?? 0
-		this.myY = myY ?? 0
-		this.offsetParent = wrapper
+		this.element = element ?? wrapper
 	}
 
 	updateForChild(element: HTMLElement): PositionContext {
-		if (!element.offsetParent) return new PositionContext(element, 0, 0, 0, 0)
-		if (!(element.offsetParent instanceof HTMLElement))
-			throw new Error('offsetParent is not an HTMLElement')
-
-		const parentChanged = this.offsetParent !== element.offsetParent
-		const newOffsetParent = element.offsetParent
-		return new PositionContext(
-			newOffsetParent,
-			parentChanged ? this.offsetParentX + newOffsetParent.offsetLeft : this.offsetParentX,
-			parentChanged ? this.offsetParentY + newOffsetParent.offsetTop : this.offsetParentY,
-			element.offsetLeft,
-			element.offsetTop
-		)
+		return new PositionContext(this.wrapper, element)
 	}
 
 	getPosition() {
-		return { x: pxToMm(this.offsetParentX + this.myX), y: pxToMm(this.offsetParentY + this.myY) }
+		const { top, left } = this.element.getBoundingClientRect()
+		const { top: wrapperTop, left: wrapperLeft } = this.wrapper.getBoundingClientRect()
+
+		return { x: pxToMm(left - wrapperLeft), y: pxToMm(top - wrapperTop) }
 	}
 }
