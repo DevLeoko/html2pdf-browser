@@ -1,10 +1,12 @@
 {
   "name": "@leoko/html2pdf-browser",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Turn HTML to PDFs in the browser - featuring templating and pagination",
+  "main2": "src/index.ts",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
+  "module2": "src/index.ts",
   "repository": "https://github.com/DevLeoko/html2pdf-browser",
   "license": "MIT",
   "keywords": [],

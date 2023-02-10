@@ -73,41 +73,91 @@ function printContainerBorder(
 }
 
 function printTextElement({ element, computedStyle, doc, position }: ElementPrintInput) {
-  let { x, y } = position.getPosition()
-
-  const text = element.innerText
-
   const fontSize = mmToPt(cssValueToMm(computedStyle.fontSize))
   const fontColor = computedStyle.color
   const fontWeight = Number.parseInt(computedStyle.fontWeight)
 
-  const paddingTop = cssValueToMm(computedStyle.paddingTop)
-  y += paddingTop
+  const textLines = extractLinesFromTextNode(element)
 
-  const paddingLeft = cssValueToMm(computedStyle.paddingLeft)
-  const paddingRight = cssValueToMm(computedStyle.paddingRight)
-  let textAlignment = computedStyle.textAlign as 'center' | 'left' | 'right' | 'justify'
+  for (const textLine of textLines) {
+    const { top, left, width: widthPx} = textLine.boundingBox
+		const { top: wrapperTop, left: wrapperLeft } = position.wrapper.getBoundingClientRect()
 
-  const { width } = getElementSize(element)
-  if (textAlignment === 'center') {
-    x += (width - paddingLeft - paddingRight) / 2
-  } else if (textAlignment === 'right') {
-    x += width - paddingRight
-  } else {
-    textAlignment = 'left'
-    x += paddingLeft
+		let x = pxToMm(left - wrapperLeft)
+    let y = pxToMm(top - wrapperTop) 
+
+    // Overwriting padding with 0 for now - to keep legacy code ._.
+    const paddingTop = 0 ?? cssValueToMm(computedStyle.paddingTop)
+    y += paddingTop
+  
+    const paddingLeft = 0 ?? cssValueToMm(computedStyle.paddingLeft)
+    const paddingRight = 0 ?? cssValueToMm(computedStyle.paddingRight)
+    let textAlignment = computedStyle.textAlign as 'center' | 'left' | 'right' | 'justify'
+  
+    const width = pxToMm(widthPx)
+    if (textAlignment === 'center') {
+      x += (width - paddingLeft - paddingRight) / 2
+    } else if (textAlignment === 'right') {
+      x += width - paddingRight
+    } else {
+      textAlignment = 'left'
+      x += paddingLeft
+    }
+  
+    const lineHeightFactor = mmToPt(cssValueToMm(computedStyle.lineHeight)) / fontSize
+    y += ptToMm((lineHeightFactor - 1) * fontSize)
+  
+    doc.writeText(textLine.text, x, y, {
+      size: fontSize,
+      color: fontColor,
+      align: textAlignment,
+      lineHeight: lineHeightFactor,
+      weight: fontWeight
+    })
+  }
+}
+
+// Inspired/copied from https://github.com/bennadel/JavaScript-Demos/blob/master/demos/text-node-line-wrapping/index.htm
+function extractLinesFromTextNode( textNode: HTMLElement ) {
+  textNode = textNode.firstChild as HTMLElement
+  if ( !textNode || textNode.nodeType !== 3 || !textNode.textContent?.trim() ) {
+    console.log(textNode);
+    return []
   }
 
-  const lineHeightFactor = mmToPt(cssValueToMm(computedStyle.lineHeight)) / fontSize
-  y += ptToMm((lineHeightFactor - 1) * fontSize)
+  const textContent = textNode.textContent;
+  const range = document.createRange();
+  const lines: string[][] = [];
+  let lineCharacters: string[] = [];
 
-  doc.writeText(text, x, y, {
-    size: fontSize,
-    color: fontColor,
-    align: textAlignment,
-    lineHeight: lineHeightFactor,
-    weight: fontWeight
-  })
+  for ( let i = 0 ; i < textContent.length ; i++ ) {
+    range.setStart( textNode, 0 );
+    range.setEnd( textNode, ( i + 1 ) );
+
+    const lineIndex = ( range.getClientRects().length - 1 );
+    if ( ! lines[ lineIndex ] ) {
+      lines.push( lineCharacters = [] );
+    }
+
+    lineCharacters.push( textContent.charAt( i ) );
+  }
+
+  const textLines: { text: string; boundingBox: DOMRect }[] = []
+  const rects = range.getClientRects()
+  for (let i = 0; i < lines.length; i++) {
+    const rect = rects[i]
+    textLines.push({
+      text: lines[i].join(''),
+      boundingBox: rect
+    })
+  }
+
+  console.log("a",textLines);
+  console.log("b", textNode);
+  
+  
+
+  return textLines
 }
 
 async function printImageElement({ element, doc, position }: ElementPrintInput) {

@@ -4,7 +4,7 @@ export class PositionContext {
 	private element: HTMLElement
 
 	constructor(
-		private wrapper: HTMLElement,
+		public wrapper: HTMLElement,
 		element?: HTMLElement,
 	) {
 		this.element = element ?? wrapper
