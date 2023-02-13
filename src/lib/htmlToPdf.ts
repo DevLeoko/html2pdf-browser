@@ -77,7 +77,7 @@ function printTextElement({ element, computedStyle, doc, position }: ElementPrin
   const fontColor = computedStyle.color
   const fontWeight = Number.parseInt(computedStyle.fontWeight)
 
-  const textLines = extractLinesFromTextNode(element)
+  const textLines = extractLinesFromHTMLElement(element)
 
   for (const textLine of textLines) {
     const { top, left, width: widthPx} = textLine.boundingBox
@@ -117,9 +117,17 @@ function printTextElement({ element, computedStyle, doc, position }: ElementPrin
   }
 }
 
+function extractLinesFromHTMLElement(element: HTMLElement) {
+  const textNodes = Array.from(element.childNodes).filter((node) => node.nodeType === 3)
+  const textLines: { text: string; boundingBox: DOMRect }[] = []
+  for (const textNode of textNodes) {
+    textLines.push(...extractLinesFromTextNode(textNode as HTMLElement))
+  }
+  return textLines
+}
+
 // Inspired/copied from https://github.com/bennadel/JavaScript-Demos/blob/master/demos/text-node-line-wrapping/index.htm
 function extractLinesFromTextNode( textNode: HTMLElement ) {
-  textNode = textNode.firstChild as HTMLElement
   if ( !textNode || textNode.nodeType !== 3 || !textNode.textContent?.trim() ) {
     console.log(textNode);
     return []
@@ -150,12 +158,7 @@ function extractLinesFromTextNode( textNode: HTMLElement ) {
       text: lines[i].join(''),
       boundingBox: rect
     })
-  }
-
-  console.log("a",textLines);
-  console.log("b", textNode);
-  
-  
+  }  
 
   return textLines
 }
